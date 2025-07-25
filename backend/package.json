@@ -4,7 +4,9 @@
   "description": "Prize Bond Checker Backend",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "build": "echo 'No build step required for Node.js backend'",
+    "test": "echo 'No tests defined yet'"
   },
   "keywords": [],
   "author": "",
