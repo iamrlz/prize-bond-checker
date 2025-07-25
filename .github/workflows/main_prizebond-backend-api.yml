@@ -25,7 +25,7 @@ jobs:
           node-version: '22.x'
 
       - name: Install, build, and test backend
-        working-directory: ./server
+        working-directory: ./backend
         run: |
           npm install
           npm run build --if-present
@@ -35,7 +35,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-backend
-          path: ./server
+          path: ./backend
 
   deploy:
     runs-on: ubuntu-latest
@@ -57,7 +57,7 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_E5104DE3B38E4B7BB33B154462CD6C9B }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7597A71669BB41FE97057F22454E43B5 }}
 
-       - name: Deploy to Azure Web App
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'prizebond-backend-api'
