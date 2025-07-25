@@ -23,7 +23,7 @@ export default function App() {
     formData.append("drawFile", drawFile);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/check-bonds`, {
+      const res = await fetch("https://prizebond-backend-api-a2dqatdwc4d8c3fa.southeastasia-01.azurewebsites.net/check-bonds", {
         method: "POST",
         body: formData,
       });
