@@ -7,7 +7,8 @@ const path = require("path");
 const pdfParse = require("pdf-parse");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+
 
 app.use(cors());
 
@@ -103,5 +104,5 @@ function parseBondFile(file) {
 }
 
 app.listen(PORT, () => {
-    console.log(`✅ Backend running at http://localhost:${PORT}`);
+    console.log(`✅ Backend running at ${PORT}`);
 });

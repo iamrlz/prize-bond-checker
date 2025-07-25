@@ -23,7 +23,7 @@ export default function App() {
     formData.append("drawFile", drawFile);
 
     try {
-      const res = await fetch("http://localhost:5000/check-bonds", {
+      const res = await fetch("https://prizebond-backend-gda7adfzfkgrfwe6.southeastasia-01.azurewebsites.net/check-bonds", {
         method: "POST",
         body: formData,
       });
