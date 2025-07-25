@@ -10,9 +10,36 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 
-app.use(cors());
+// Configure CORS for GitHub Pages
+app.use(cors({
+    origin: [
+        'https://iamrlz.github.io',
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173'
+    ],
+    credentials: true
+}));
 
 const upload = multer({ dest: "uploads/" });
+
+// Health check endpoint
+app.get("/", (req, res) => {
+    res.json({ 
+        status: "healthy", 
+        timestamp: new Date().toISOString(),
+        version: "1.0.0"
+    });
+});
+
+// Health check for Azure deployment
+app.get("/health", (req, res) => {
+    res.json({ 
+        status: "healthy", 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
 
 app.post(
     "/check-bonds",
@@ -21,9 +48,10 @@ app.post(
         { name: "drawFile", maxCount: 1 },
     ]),
     async (req, res) => {
+        let userFile, drawFile;
         try {
-            const userFile = req.files["userFile"]?.[0];
-            const drawFile = req.files["drawFile"]?.[0];
+            userFile = req.files["userFile"]?.[0];
+            drawFile = req.files["drawFile"]?.[0];
 
             if (!userFile || !drawFile) {
                 return res.status(400).json({ error: "Both files are required" });
@@ -68,13 +96,32 @@ app.post(
             });
         } catch (err) {
             console.error("❌ Error in /check-bonds:", err);
-            res.status(500).json({ error: "Failed to process files" });
+            console.error("❌ Stack trace:", err.stack);
+            console.error("❌ User file:", userFile ? userFile.originalname : 'None');
+            console.error("❌ Draw file:", drawFile ? drawFile.originalname : 'None');
+            
+            // Clean up files if they exist
+            try {
+                if (userFile && fs.existsSync(userFile.path)) {
+                    fs.unlinkSync(userFile.path);
+                }
+                if (drawFile && fs.existsSync(drawFile.path)) {
+                    fs.unlinkSync(drawFile.path);
+                }
+            } catch (cleanupErr) {
+                console.error("❌ Error cleaning up files:", cleanupErr);
+            }
+            
+            res.status(500).json({ 
+                error: "Failed to process files. Please check formats.",
+                details: process.env.NODE_ENV === 'development' ? err.message : undefined
+            });
         }
     }
 );
 
 // Parse uploaded file content into bond number strings
-function parseBondFile(file) {
+async function parseBondFile(file) {
     const ext = path.extname(file.originalname).toLowerCase();
 
     if (ext === ".xlsx" || ext === ".xls") {
@@ -94,10 +141,9 @@ function parseBondFile(file) {
 
     if (ext === ".pdf") {
         const dataBuffer = fs.readFileSync(file.path);
-        return pdfParse(dataBuffer).then((data) => {
-            const numbers = data.text.match(/\b\d{4,10}\b/g) || [];
-            return numbers.map((b) => b.trim());
-        });
+        const data = await pdfParse(dataBuffer);
+        const numbers = data.text.match(/\b\d{4,10}\b/g) || [];
+        return numbers.map((b) => b.trim());
     }
 
     throw new Error("Unsupported file type: " + ext);
