@@ -34,7 +34,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-backend
-          path: ./backend
+          path: |
+            ./backend
+            !./backend/node_modules
 
   deploy:
     runs-on: ubuntu-latest
@@ -48,6 +50,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-backend
+          path: .
+
+      - name: Install dependencies
+        run: npm install
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -56,9 +62,9 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_E5104DE3B38E4B7BB33B154462CD6C9B }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_7597A71669BB41FE97057F22454E43B5 }}
       
-        - name: Deploy to Azure Web App
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'prizebond-backend-api'
           slot-name: 'Production'
-          package: ./backend
+          package: .
