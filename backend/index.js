@@ -9,10 +9,17 @@ const pdfParse = require("pdf-parse");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ✅ Allow only frontend domain (GitHub Pages)
+app.use(cors({
+    origin: "https://iamrlz.github.io", // Replace with your GitHub Pages URL
+    methods: ["POST"],
+}));
 
-app.use(cors());
-
-const upload = multer({ dest: "uploads/" });
+// ✅ Configure multer with size limit (2MB)
+const upload = multer({
+    dest: "uploads/",
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB per file
+});
 
 app.post(
     "/check-bonds",
@@ -34,7 +41,6 @@ app.post(
                 parseBondFile(drawFile),
             ]);
 
-            // Extract only valid 6-digit bond numbers
             const normalize = (b) => {
                 const match = String(b).match(/\b\d{6}\b/);
                 return match ? match[0] : null;
@@ -55,10 +61,11 @@ app.post(
                     prize: "Matched",
                 }));
 
-            // Debugging (Optional - can be removed in prod)
+            // Optional: Debug logs
             console.log("🧾 Total user bonds:", userBonds.length);
             console.log("🏆 Matches:", matches.length);
 
+            // Clean up uploaded files
             fs.unlinkSync(userFile.path);
             fs.unlinkSync(drawFile.path);
 
@@ -73,9 +80,13 @@ app.post(
     }
 );
 
-// Parse uploaded file content into bond number strings
+// ✅ Parse uploaded files based on extension
 function parseBondFile(file) {
     const ext = path.extname(file.originalname).toLowerCase();
+
+    if (![".xlsx", ".xls", ".txt", ".pdf"].includes(ext)) {
+        throw new Error("Unsupported file type: " + ext);
+    }
 
     if (ext === ".xlsx" || ext === ".xls") {
         const workbook = XLSX.readFile(file.path);
@@ -103,6 +114,7 @@ function parseBondFile(file) {
     throw new Error("Unsupported file type: " + ext);
 }
 
+// ✅ Start server
 app.listen(PORT, () => {
     console.log(`✅ Backend running at http://localhost:${PORT}`);
 });
