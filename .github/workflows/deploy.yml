@@ -18,13 +18,16 @@ jobs:
         with:
           node-version: 20.19.0
 
-      - name: Install dependencies
+      - name: Clean npm cache and install dependencies
         working-directory: frontend
-        run: npm install
+        run: |
+          rm -rf node_modules package-lock.json
+          npm cache clean --force
+          npm install
 
       - name: Build Vite App
         working-directory: frontend
-        run: npm run build
+        run: npx vite build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
